@@ -9,6 +9,7 @@ const reDrawBtn = document.getElementById("reDrawBtn");
 const canvasOffsetX = canvas.offsetLeft;
 const canvasOffsetY = canvas.offsetTop;
 const cursorDiv = document.getElementById("cursorDiv");
+const pausePlayBtn = document.getElementById("pausePlay");
 
 canvas.width = window.innerWidth - canvasOffsetX;
 canvas.height = (window.innerHeight - canvasOffsetY) / 2;
@@ -18,6 +19,7 @@ drawAgainBoard.height = window.innerHeight;
 
 
 reDrawBtn.addEventListener("click", reDraw);
+pausePlayBtn.addEventListener("click", handlePausePlay);
 
 let isRecording = false;
 function handleRec(ev) {
@@ -105,36 +107,95 @@ function startRec(ev) {
 function stopRec() {
     document.removeEventListener("mousemove", function (ev) { e = ev; });
     clearInterval(recorder);
+    reDrawBtn.removeAttribute("disabled", "true");
 }
 
 
+let paused = false;
+let pausedPoint;
 function reDraw() {
+    reDrawBtn.setAttribute("disabled", "true");
+    audio.play();
+    pausePlayBtn.style.display = "block";
     if (data.points.length <= 4) {
         alert("No recording found");
         return
     }
+    drCtx.clearRect(0, 0, window.innerWidth, window.innerHeight)
     let allPointsData = data.points;
-    allPointsData.forEach((obj) => {
-        if (obj.isDraw) {
-            setTimeout(function () {
-                console.log(obj);
+
+    let idx = 0;
+    let dataLength = allPointsData.length;
+    let playInterval = setInterval(function () {
+        if (idx < dataLength && !paused) {
+            if (idx == dataLength - 1) {
+                reDrawBtn.removeAttribute("disabled", "true");
+                pausePlayBtn.style.display = "none";
+            }
+            let objData = allPointsData[idx];
+            if (objData.isDraw) {
                 drCtx.lineWidth = 5;
                 drCtx.lineCap = 'round';
-                drCtx.lineTo(obj.x+canvasOffsetX, obj.y);
+                drCtx.lineTo(objData.x + canvasOffsetX, objData.y);
                 drCtx.stroke();
-            }, obj.time)
+            }
+            else {
+                drCtx.beginPath();
+            }
+            cursorDiv.style.left = objData.x + canvasOffsetX;
+            cursorDiv.style.top = objData.y;
+            idx++;
         }
         else {
-            setTimeout(function () {
-                drCtx.beginPath();
-            }, obj.time)
+            pausedPoint = idx;
+            clearInterval(playInterval);
         }
-        setTimeout(function () {
-            cursorDiv.style.left = obj.x+canvasOffsetX;
-            cursorDiv.style.top = obj.y;
-        }, obj.time-100)
-    });
+    }, 25);
+
     drCtx.beginPath();
+
+    // for (let i = 0; i < allPointsData.length; i++) {
+    //     let objData = allPointsData[i];
+    //     if (objData.isDraw) {
+    //         setTimeout(function () {
+    //             // console.log(obj);
+    //             drCtx.lineWidth = 5;
+    //             drCtx.lineCap = 'round';
+    //             drCtx.lineTo(objData.x + canvasOffsetX, objData.y);
+    //             drCtx.stroke();
+    //         }, objData.time)
+    //     }
+    //     else {
+    //         setTimeout(function () {
+    //             drCtx.beginPath();
+    //         }, objData.time)
+    //     }
+    //     setTimeout(function () {
+    //         cursorDiv.style.left = objData.x + canvasOffsetX;
+    //         cursorDiv.style.top = objData.y;
+    //     }, objData.time - 100)
+    // }
+
+    // allPointsData.forEach((obj) => {
+    //     if (obj.isDraw) {
+    //         setTimeout(function () {
+    //             // console.log(obj);
+    //             drCtx.lineWidth = 5;
+    //             drCtx.lineCap = 'round';
+    //             drCtx.lineTo(obj.x + canvasOffsetX, obj.y);
+    //             drCtx.stroke();
+    //         }, obj.time)
+    //     }
+    //     else {
+    //         setTimeout(function () {
+    //             drCtx.beginPath();
+    //         }, obj.time)
+    //     }
+    //     setTimeout(function () {
+    //         cursorDiv.style.left = obj.x + canvasOffsetX;
+    //         cursorDiv.style.top = obj.y;
+    //     }, obj.time - 100)
+    // });
 }
 function dr() {
     drCtx.beginPath();
@@ -161,3 +222,49 @@ function dr() {
     ctx.stroke();
 }
 // dr();
+
+function handlePausePlay() {
+    if (paused == false) {
+        paused = true;
+        audio.pause();
+        pausePlayBtn.classList.remove("fa-pause");
+        pausePlayBtn.classList.add("fa-play");
+    } else {
+        paused = false;
+        pausePlayBtn.classList.add("fa-pause");
+        pausePlayBtn.classList.remove("fa-play");
+        resumeV();
+    }
+}
+
+function resumeV() {
+    idx = pausedPoint;
+    audio.play();
+    let allPointsData = data.points;
+    let dataLength = allPointsData.length;
+    let playInterval = setInterval(function () {
+        if (idx < dataLength && !paused) {
+            if (idx == dataLength - 1) {
+                reDrawBtn.removeAttribute("disabled", "true")
+                pausePlayBtn.style.display = "none";
+            }
+            let objData = allPointsData[idx];
+            if (objData.isDraw) {
+                drCtx.lineWidth = 5;
+                drCtx.lineCap = 'round';
+                drCtx.lineTo(objData.x + canvasOffsetX, objData.y);
+                drCtx.stroke();
+            }
+            else {
+                drCtx.beginPath();
+            }
+            cursorDiv.style.left = objData.x + canvasOffsetX;
+            cursorDiv.style.top = objData.y;
+            idx++;
+        }
+        else {
+            pausedPoint = idx;
+            clearInterval(playInterval);
+        }
+    }, 25);
+}

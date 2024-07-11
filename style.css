@@ -79,11 +79,23 @@ h1 {
 }
 
 .cursor{
-    width: 10px;
-    height: 10px;
-    background-color: rgb(255, 0, 0);
+    width: 20px;
+    height: 20px;
+    /* background-color: rgb(255, 0, 0); */
     position: absolute;
     top: 20px;
     left: 50%;
     transition: 100ms;
+    background-image: url(cursor.png);
+    background-size: cover;
+}
+
+#pausePlay{
+    color: black;
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 25px;
+    display: none;
 }
